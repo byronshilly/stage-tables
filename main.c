@@ -6,9 +6,9 @@
 
 /* Define the stage table */ 
 static stage_t test_table[] = {
-    { "stage 1", stage_1, NULL },
-    { "stage 2", stage_2, NULL }, 
-    { "stage 3", stage_3, NULL },
+    { "stage 1", stage_1, stage_1_recovery },
+    { "stage 2", stage_2, stage_2_recovery }, 
+    { "stage 3", stage_3, stage_3_recovery },
 };
 
 int 

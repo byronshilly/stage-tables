@@ -1,3 +1,4 @@
+#include <stdlib.h> 
 #include <stdio.h> 
 #include <stdint.h> 
 #include <string.h>
@@ -12,10 +13,10 @@ void
 initialize_context(stage_table_context_t* context, stage_table_t* stage_table) 
 {
     context->status         = STAGE_SUCCESS;
+    context->error_message  = "N/A"; 
     context->current_stage  = &(stage_table->stages[0]); 
     context->recovery_mode  = false; 
 
-    memset(context->error_message, 0, ERROR_MESSAGE_SIZE);
 }
 
 
@@ -44,9 +45,9 @@ execute_stage_table(stage_table_t* stage_table,
         // Check status
         if (stage_status) {
             // Print the error
-            printf("== Failure:\n"
+            printf("\n== Failure:\n"
                    "==   Stage: %s\n"
-                   "==   Error: %d - %s\n", 
+                   "==   Error: %d - %s\n\n", 
                     context->current_stage->name, 
                     context->status, 
                     context->error_message);
@@ -56,16 +57,18 @@ execute_stage_table(stage_table_t* stage_table,
 
             // Check if recovery was successful
             if (recovery_status == RECOVERY_FAILURE) {
-                printf("== Recovery Unsuccessful:\n"
+                printf("\n== Recovery Unsuccessful:\n"
                        "==   Stage: %s\n"
-                       "==   Error: %d - %s\n",
+                       "==   Error: %d - %s\n\n",
                         context->current_stage->name,
                         context->status,
                         context->error_message); 
 
+                free_context(context); 
                 return STAGE_TABLE_FAILURE_UNRECOVERED; 
             }
-
+            
+            free_context(context);
             return STAGE_TABLE_FAILURE_RECOVERED; 
         }
 
@@ -73,6 +76,7 @@ execute_stage_table(stage_table_t* stage_table,
         context->current_stage++; 
     }
 
+    free_context(context);
     return STAGE_TABLE_SUCCESS;
 }
 
@@ -112,11 +116,44 @@ recovery_procedure(stage_table_t* stage_table,
     printf("Executing recovery procedure...\n"); 
     context->recovery_mode = true; 
 
-    // TODO
     bool complete = false; 
+    stage_execution_status_e stage_status;
     while (!complete) {
-        complete = true; 
+        if (context->current_stage->recovery_function == NULL) { 
+            continue; 
+        }
+
+        stage_status = context->current_stage->recovery_function(context);  
+
+        if (stage_status) {
+            printf("== Recovery Failure:\n"
+                   "==   Stage: %s\n"
+                   "==   Error: %d - %s\n", 
+                    context->current_stage->name, 
+                    context->status, 
+                    context->error_message == NULL ? "N/A" : context->error_message);           
+            
+            return RECOVERY_FAILURE;
+        }
+
+        if (context->current_stage == stage_table->stages) { 
+            printf("Recovery procedure complete.\n"); 
+            complete = true; 
+        }
+
+        context->current_stage--; 
     }
 
     return RECOVERY_SUCCESS; 
+}
+
+
+/*
+ * Free any allocated memory in the context structure
+ */
+void
+free_context(stage_table_context_t* context)
+{
+    free(context->error_message); 
+    return;
 }

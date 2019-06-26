@@ -1,2 +1,2 @@
 - Find a way to abstract table initialization from main 
-- Implement recovery procedure
+- Implement a function for setting error code/message in the table context from a string

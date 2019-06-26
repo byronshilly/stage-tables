@@ -4,7 +4,6 @@
 #include <stdint.h> 
 #include <stdbool.h> 
 
-#define ERROR_MESSAGE_SIZE 100 
 
 /* 
  * Return code enumerations 
@@ -60,7 +59,7 @@ struct stage_s {
 /* Stage table context definition */ 
 struct stage_table_context_s {
     stage_status_e  status; 
-    char            error_message[ERROR_MESSAGE_SIZE]; 
+    char*           error_message; 
     stage_t*        current_stage;
     bool            recovery_mode;  
 };
